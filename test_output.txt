@@ -1,0 +1,53 @@
+﻿Analyzing: simple.pnml
+--------------------------------------------------
+
+============================================================
+PETRI NET SUMMARY
+============================================================
+Places: 3
+Transitions: 2
+Input arcs: 2
+Output arcs: 2
+
+Initial marking:
+  p1: 1
+  p2: 0
+  p3: 0
+============================================================
+
+
+==================================================
+TASK 2: EXPLICIT REACHABILITY
+==================================================
+Reachable states (Explicit): 3
+Time: 0.0000s
+
+==================================================
+TASK 3: SYMBOLIC REACHABILITY (BDD)
+==================================================
+============================================================
+TASK 3: SYMBOLIC REACHABILITY (BDD) - FIXED POINT
+============================================================
+BDD constructed: yes
+Reported reachable markings: 3
+Construction time: 0.0022 seconds
+============================================================
+
+SUCCESS: State counts match.
+
+==================================================
+TASK 4: DEADLOCK DETECTION (SYMBOLIC)
+==================================================
+Time: 0.0001s
+Deadlock marking:
+  p1: 0
+  p2: 0
+  p3: 1
+
+==================================================
+TASK 5: OPTIMIZATION (SYMBOLIC)
+==================================================
+Objective: Maximize sum of tokens (all weights = 1)
+Time: 0.0002s
+Optimal Value: 1
+Optimal Marking (non-zero): {'p1': 1, 'p2': 1}

@@ -1,0 +1,142 @@
+\section{Theoretical Background}
+\label{sec:theoretical}
+
+\subsection{Petri Nets}
+\label{subsec:petri-nets}
+
+\subsubsection{Basic Definitions}
+A \textbf{Petri net} is a tuple $N = (P, T, F, W, M_0)$ where:
+\begin{itemize}
+    \item $P$ is a finite set of \textbf{places} (conditions)
+    \item $T$ is a finite set of \textbf{transitions} (events), where $P \cap T = \emptyset$
+    \item $F \subseteq (P \times T) \cup (T \times P)$ is the \textbf{flow relation} (arcs)
+    \item $W: F \to \mathbb{N}^+$ is the \textbf{weight function}
+    \item $M_0: P \to \mathbb{N}$ is the \textbf{initial marking}
+\end{itemize}
+
+For a transition $t \in T$:
+\begin{itemize}
+    \item The \textbf{preset} is ${}^{\bullet}t = \{p \in P \mid (p,t) \in F\}$
+    \item The \textbf{postset} is $t^{\bullet} = \{p \in P \mid (t,p) \in F\}$
+\end{itemize}
+
+\subsubsection{Firing Semantics}
+A marking $M: P \to \mathbb{N}$ assigns a non-negative integer (number of tokens) to each place.
+
+A transition $t$ is \textbf{enabled} at marking $M$ if:
+\begin{equation}
+    \forall p \in {}^{\bullet}t: M(p) \geq W(p,t)
+\end{equation}
+
+When an enabled transition $t$ fires, producing a new marking $M'$:
+\begin{equation}
+    M'(p) = M(p) - W(p,t) + W(t,p)
+\end{equation}
+
+\subsubsection{1-Safe Petri Nets}
+A Petri net is \textbf{1-safe} (or 1-bounded) if for all reachable markings $M$ and all places $p$:
+\begin{equation}
+    M(p) \leq 1
+\end{equation}
+
+This assignment focuses exclusively on 1-safe nets, which can be efficiently represented using Boolean variables.
+
+\subsubsection{Reachability}
+The \textbf{reachability set} $\mathcal{R}(M_0)$ from initial marking $M_0$ is:
+\begin{equation}
+    \mathcal{R}(M_0) = \{M \mid M_0 \xrightarrow{*} M\}
+\end{equation}
+where $\xrightarrow{*}$ denotes the reflexive and transitive closure of the firing relation.
+
+\subsection{Binary Decision Diagrams (BDDs)}
+\label{subsec:bdds}
+
+\subsubsection{Motivation}
+Explicit enumeration of reachable markings suffers from state-space explosion. For a 1-safe net with $|P|$ places, the worst-case number of markings is $2^{|P|}$.
+
+Binary Decision Diagrams (BDDs)~\cite{bryant1986} provide a \textbf{canonical} and often \textbf{compact} representation of Boolean functions. They exploit structural similarities to represent exponentially large sets symbolically.
+
+\subsubsection{Definition}
+A BDD is a directed acyclic graph (DAG) with:
+\begin{itemize}
+    \item Two terminal nodes: $\mathbf{0}$ (false) and $\mathbf{1}$ (true)
+    \item Internal nodes labeled with Boolean variables $x_i$
+    \item Each internal node has two outgoing edges: low (dashed, $x_i = 0$) and high (solid, $x_i = 1$)
+\end{itemize}
+
+\textbf{Reduced Ordered BDDs (ROBDDs)} enforce:
+\begin{enumerate}
+    \item Fixed variable ordering along all paths
+    \item No duplicate nodes (isomorphic subgraphs are merged)
+    \item No redundant tests ($x_i$ node where both children are identical)
+\end{enumerate}
+
+\subsubsection{Symbolic Reachability Using BDDs}
+For a 1-safe Petri net:
+\begin{itemize}
+    \item Each place $p_i$ is encoded as a Boolean variable $x_i$
+    \item A marking $M$ is represented as a Boolean vector $(x_1, \ldots, x_{|P|})$
+    \item The reachability set $\mathcal{R}(M_0)$ is encoded as a BDD $R(x)$
+\end{itemize}
+
+\textbf{Transition Relation}: For each transition $t$, we build:
+\begin{equation}
+    T_t(x, x') = \text{Enabled}_t(x) \land \text{NextState}_t(x, x')
+\end{equation}
+where $x'$ denotes next-state variables.
+
+The global transition relation is:
+\begin{equation}
+    T(x, x') = \bigvee_{t \in T} T_t(x, x')
+\end{equation}
+
+\textbf{Fixed-Point Iteration}:
+\begin{algorithmic}[1]
+\State $R \gets M_0$ \Comment{Initial BDD}
+\Repeat
+    \State $R_{\text{new}} \gets R \lor \exists x. (R(x) \land T(x, x'))[x'/x]$
+\Until{$R_{\text{new}} \equiv R$}
+\State \Return $R$
+\end{algorithmic}
+
+\subsection{Integer Linear Programming (ILP)}
+\label{subsec:ilp}
+
+\subsubsection{General Form}
+An Integer Linear Program aims to:
+\begin{align}
+    \text{maximize (or minimize)} \quad & c^T x \\
+    \text{subject to} \quad & Ax \leq b \\
+    & x \in \mathbb{Z}^n
+\end{align}
+where $c \in \mathbb{Z}^n$, $A \in \mathbb{Z}^{m \times n}$, and $b \in \mathbb{Z}^m$.
+
+\subsubsection{Application to Petri Nets}
+ILP can encode Petri net properties using:
+\begin{itemize}
+    \item \textbf{State variables}: Binary indicators for markings or places
+    \item \textbf{Transition variables}: Binary indicators for firing sequences
+    \item \textbf{Structural constraints}: Incidence matrix equations
+    \item \textbf{Objective functions}: Optimize token counts, minimize deadlock distance, etc.
+\end{itemize}
+
+For 1-safe nets, variables are naturally binary: $x_i \in \{0, 1\}$.
+
+\subsection{Combining BDD and ILP}
+\label{subsec:bdd-ilp-combination}
+
+The key insight is to leverage the strengths of both approaches:
+\begin{enumerate}
+    \item \textbf{BDD for enumeration}: Efficiently represent and enumerate the reachability set $\mathcal{R}(M_0)$ symbolically.
+    \item \textbf{ILP for optimization/verification}: Formulate precise constraints and objectives over the candidate markings extracted from the BDD.
+\end{enumerate}
+
+\textbf{Workflow}:
+\begin{enumerate}
+    \item Use BDD to construct the symbolic reachability set.
+    \item Sample or enumerate candidate markings from the BDD (up to a manageable limit).
+    \item Formulate an ILP problem using these candidates as constraints or objectives.
+    \item Solve the ILP to find deadlocks, optimal markings, or verify properties.
+\end{enumerate}
+
+This hybrid approach balances the compactness of BDDs with the expressiveness of ILP.

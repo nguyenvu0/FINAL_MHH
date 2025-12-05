@@ -1,0 +1,203 @@
+\section{Implementation Design}
+\label{sec:implementation}
+
+\subsection{System Architecture}
+\label{subsec:architecture}
+
+The Petri Net Analyzer is organized into modular components, each corresponding to one of the five tasks:
+
+\begin{itemize}
+    \item \texttt{task1\_parser}: PNML file parsing and internal representation
+    \item \texttt{task2\_explicit}: Explicit reachability analysis (BFS/DFS)
+    \item \texttt{task3\_symbolic}: Symbolic reachability using BDDs
+    \item \texttt{task4\_deadlock}: Deadlock detection (ILP + BDD)
+    \item \texttt{task5\_optimization}: Optimization over reachable markings (ILP + BDD)
+\end{itemize}
+
+The \texttt{main.py} driver orchestrates all tasks and provides a unified interface.
+
+\subsection{Task 1: PNML Parser}
+\label{subsec:task1}
+
+\subsubsection{Input Format}
+PNML (Petri Net Markup Language) is an XML-based standard for representing Petri nets~\cite{pnml}. A typical structure includes:
+\begin{lstlisting}[language=XML,caption={PNML Example},label={lst:pnml}]
+<pnml>
+  <net id="net1">
+    <place id="p1">
+      <initialMarking><text>1</text></initialMarking>
+    </place>
+    <transition id="t1"/>
+    <arc source="p1" target="t1"/>
+  </net>
+</pnml>
+\end{lstlisting}
+
+\subsubsection{Data Structures}
+The \texttt{PetriNet} class maintains both dictionary-based and matrix-based representations:
+
+\begin{lstlisting}[language=Python,caption={PetriNet Data Structure},label={lst:petrinet}]
+@dataclass
+class PetriNet:
+    places: List[str]
+    transitions: List[str]
+    
+    # Dictionary-based representation
+    input_arcs: Dict[str, List[str]]
+    output_arcs: Dict[str, List[str]]
+    initial_marking: Dict[str, int]
+    
+    # Matrix-based representation
+    I: np.ndarray  # Input incidence matrix
+    O: np.ndarray  # Output incidence matrix
+    M0: np.ndarray # Initial marking vector
+\end{lstlisting}
+
+The dictionary representation is used for explicit reachability (Task 2), while the matrix representation facilitates algebraic operations in Tasks 4 and 5.
+
+\subsubsection{Consistency Verification}
+The parser checks for:
+\begin{itemize}
+    \item Isolated transitions (no input and no output arcs)
+    \item Isolated places (unreachable or non-productive)
+    \item Well-formed XML structure and namespace handling
+\end{itemize}
+
+\subsection{Task 2: Explicit Reachability}
+\label{subsec:task2}
+
+\subsubsection{Algorithm}
+We implement breadth-first search (BFS) to enumerate all reachable markings:
+
+\begin{algorithm}[H]
+\caption{Explicit Reachability (BFS)}
+\label{alg:explicit}
+\begin{algorithmic}[1]
+\State $\text{frontier} \gets \{M_0\}$ \Comment{Queue}
+\State $\text{visited} \gets \emptyset$
+\While{$\text{frontier} \neq \emptyset$}
+    \State $M \gets \text{frontier.pop()}$
+    \If{$M \in \text{visited}$}
+        \State \textbf{continue}
+    \EndIf
+    \State $\text{visited} \gets \text{visited} \cup \{M\}$
+    \For{$t \in T$}
+        \If{$t$ is enabled at $M$}
+            \State $M' \gets \text{fire}(M, t)$
+            \State $\text{frontier.append}(M')$
+        \EndIf
+    \EndFor
+\EndWhile
+\State \Return $\text{visited}$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Complexity}: $O(|\mathcal{R}(M_0)| \cdot |T|)$ in the worst case.
+
+\subsubsection{Optimization}
+Markings are represented as tuples for efficient hashing and set membership tests.
+
+\subsection{Task 3: Symbolic Reachability with BDD}
+\label{subsec:task3}
+
+\subsubsection{BDD Library}
+We use \texttt{pyeda}~\cite{pyeda}, a pure-Python BDD library, for portability and ease of integration.
+
+\subsubsection{Variable Encoding}
+For a net with $n$ places $(p_1, \ldots, p_n)$:
+\begin{itemize}
+    \item Current state: $x_1, \ldots, x_n$
+    \item Next state: $y_1, \ldots, y_n$
+\end{itemize}
+
+\subsubsection{Transition Relation Construction}
+For each transition $t$:
+\begin{align}
+    \text{Enabled}_t(x) &= \bigwedge_{p \in {}^{\bullet}t} x_p \\
+    \text{NextState}_t(x, y) &= \bigwedge_{i=1}^{n} \text{NextVal}_i(x, y)
+\end{align}
+where:
+\begin{equation}
+\text{NextVal}_i(x, y) = \begin{cases}
+    \neg y_i & \text{if } p_i \in {}^{\bullet}t \setminus t^{\bullet} \text{ (consumed)} \\
+    y_i & \text{if } p_i \in t^{\bullet} \text{ (produced)} \\
+    (x_i \leftrightarrow y_i) & \text{otherwise (unchanged)}
+\end{cases}
+\end{equation}
+
+\subsubsection{Fixed-Point Iteration}
+\begin{lstlisting}[language=Python,caption={Symbolic Reachability},label={lst:symbolic}]
+def build_symbolic(self):
+    S = self._build_initial_marking_bdd()
+    T = self._build_transition_relation()
+    
+    iteration = 0
+    while True:
+        iteration += 1
+        next_states_y = (S & T).smoothing(self._x_vars)
+        next_states_x = next_states_y.compose(self._y_to_x)
+        S_new = S | next_states_x
+        
+        if S_new.equivalent(S):
+            break
+        S = S_new
+    
+    return S
+\end{lstlisting}
+
+\subsection{Task 4: Deadlock Detection (ILP + BDD)}
+\label{subsec:task4}
+
+\subsubsection{Deadlock Definition}
+A \textbf{deadlock} is a reachable marking $M$ where no transition is enabled:
+\begin{equation}
+    \text{Deadlock}(M) \iff M \in \mathcal{R}(M_0) \land \forall t \in T: \neg \text{Enabled}_t(M)
+\end{equation}
+
+\subsubsection{Hybrid Approach}
+\textbf{Step 1}: Use BDD to enumerate candidate markings (up to a limit $N$):
+\begin{lstlisting}[language=Python]
+candidates = sym_reach.enumerate_markings(limit=1000)
+\end{lstlisting}
+
+\textbf{Step 2}: Formulate ILP problem using \texttt{pulp}:
+\begin{align}
+    \text{maximize} \quad & \sum_{i=1}^{N} y_i \\
+    \text{subject to} \quad & \sum_{i=1}^{N} y_i = 1 \quad \text{(select one marking)} \\
+    & y_i = 0 \quad \text{if marking $i$ is not dead} \\
+    & y_i \in \{0, 1\}
+\end{align}
+
+If the ILP is feasible, the selected marking is a deadlock.
+
+\subsection{Task 5: Optimization (ILP + BDD)}
+\label{subsec:task5}
+
+\subsubsection{Problem Statement}
+Given weights $c \in \mathbb{Z}^{|P|}$, find:
+\begin{equation}
+    \max_{M \in \mathcal{R}(M_0)} c^T M
+\end{equation}
+
+\subsubsection{ILP Formulation}
+\textbf{Step 1}: Enumerate candidates from BDD.
+
+\textbf{Step 2}: For each candidate $M_i$, compute $v_i = c^T M_i$.
+
+\textbf{Step 3}: Solve:
+\begin{align}
+    \text{maximize} \quad & \sum_{i=1}^{N} v_i \cdot y_i \\
+    \text{subject to} \quad & \sum_{i=1}^{N} y_i = 1 \\
+    & y_i \in \{0, 1\}
+\end{align}
+
+The optimal solution identifies the best reachable marking.
+
+\subsection{Software Engineering Practices}
+\begin{itemize}
+    \item \textbf{Modularity}: Each task in a separate package
+    \item \textbf{Type hints}: Full Python type annotations for clarity
+    \item \textbf{Documentation}: Docstrings for all public methods
+    \item \textbf{Error handling}: Graceful failures with informative messages
+    \item \textbf{Testing}: Individual task files can be run standalone
+\end{itemize}

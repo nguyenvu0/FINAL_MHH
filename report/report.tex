@@ -1,0 +1,82 @@
+% 'draft' mode can be used to speed up compilation
+\documentclass[twoside,final]{hcmut-report}
+\usepackage{codespace}
+
+% Encodings
+\usepackage{gensymb,textcomp}
+
+% Better tables
+\usepackage{array,longtable,multicol,multirow,siunitx,tabularx}
+
+% Better enum
+\usepackage{enumitem}
+
+% Graphics
+\usepackage{caption,float}
+\usepackage[export]{adjustbox}
+
+% References
+\usepackage[nameinlink]{cleveref}
+
+% Math
+\usepackage{amsmath,amssymb}
+
+% Algorithms
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% Hyperlinks
+\usepackage{hyperref}
+
+% Configurations
+\coursename{Mathematical Modeling - CO2011}
+\reporttype{Assignment Report}
+\title{Symbolic and Algebraic Reasoning in Petri Nets}
+\advisor{& Dr. Van-Giang Trinh &}
+\stuname{%
+  & [Student Name 1] & [ID 1] \\
+  & [Student Name 2] & [ID 2] \\
+  & [Student Name 3] & [ID 3] \\
+}
+
+% Allow page breaks inside align* environment
+\allowdisplaybreaks{}
+
+% Set depth of numbering for counters
+\AtBeginDocument{\counterwithin{lstlisting}{section}}
+
+\begin{document}
+\coverpage%
+
+\section*{Member List \& Workload}
+\newcounter{memberrowno}
+\setcounter{memberrowno}{0}
+\begin{center}
+  \begin{tabular}{>{\stepcounter{memberrowno}\thememberrowno}llcc}
+    \toprule
+    \multicolumn{1}{c}{\textbf{No.}} & \textbf{Full name} & \textbf{Student ID} & \textbf{Contribution} \\
+    \midrule
+                                     & [Name 1]           & [ID 1]              & 33.3\%                \\
+                                     & [Name 2]           & [ID 2]              & 33.3\%                \\
+                                     & [Name 3]           & [ID 3]              & 33.4\%                \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+\clearpage
+
+\tableofcontents
+\listoffigures
+\listoftables
+\lstlistoflistings{}
+
+\clearpage
+\input{chapters/introduction.tex}
+\input{chapters/theoretical-background.tex}
+\input{chapters/implementation.tex}
+\input{chapters/experimental-results.tex}
+\input{chapters/conclusion.tex}
+
+\bibliographystyle{plain}
+\bibliography{refs/references.bib}
+
+\end{document}

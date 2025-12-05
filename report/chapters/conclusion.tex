@@ -1,0 +1,108 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+\subsection{Summary of Achievements}
+\label{subsec:achievements}
+
+This assignment successfully implemented a comprehensive Petri net analysis framework combining symbolic and algebraic reasoning techniques. The key accomplishments include:
+
+\begin{enumerate}
+    \item \textbf{Task 1 (PNML Parser)}: Robust XML parser supporting standard PNML format with consistency validation.
+    \item \textbf{Task 2 (Explicit Reachability)}: BFS-based enumeration serving as a correctness baseline.
+    \item \textbf{Task 3 (BDD Symbolic Reachability)}: Fixed-point iteration using PyEDA, verified against explicit results.
+    \item \textbf{Task 4 (Deadlock Detection)}: Hybrid ILP+BDD approach successfully identifying deadlocks in two test models and correctly reporting no deadlock in the mutual exclusion model.
+    \item \textbf{Task 5 (Optimization)}: ILP formulation over BDD-enumerated candidates to optimize linear objectives.
+\end{enumerate}
+
+All tasks were validated on three test models, demonstrating correctness and practical feasibility.
+
+\subsection{Challenges Encountered}
+\label{subsec:challenges}
+
+\subsubsection{BDD Variable Ordering}
+The performance of BDDs is highly sensitive to variable ordering. In our implementation, we use a simple fixed ordering (sorted by place name). For larger models, dynamic reordering or heuristic-based ordering (e.g., based on net structure) could significantly improve BDD size and computation time.
+
+\subsubsection{State-Space Explosion in ILP}
+For Tasks 4 and 5, we limit the number of candidate markings extracted from the BDD (typically 500--1000). This is necessary because:
+\begin{itemize}
+    \item Enumerating $2^{|P|}$ markings from a BDD can be prohibitively slow.
+    \item The ILP solver's performance degrades with too many variables.
+\end{itemize}
+
+\textbf{Limitation}: If the optimal marking or deadlock is not among the sampled candidates, it will be missed. However, for our test models (3 states each), full enumeration is trivial.
+
+\subsubsection{ILP Solver Overhead}
+While ILP provides great flexibility, the overhead of formulating and solving the ILP problem dominates the runtime for small models. For the 3-state test cases, explicit iteration over candidates would be faster. The advantage of ILP emerges when:
+\begin{itemize}
+    \item The number of reachable markings is large but structured.
+    \item Complex constraints beyond simple enumeration are needed.
+\end{itemize}
+
+\subsection{Possible Improvements}
+\label{subsec:improvements}
+
+\subsubsection{Advanced BDD Techniques}
+\begin{itemize}
+    \item \textbf{Dynamic variable reordering}: Automatically adjust ordering during BDD construction to minimize size.
+    \item \textbf{Symbolic partitioning}: Partition the transition relation to reduce peak BDD size during image computation.
+    \item \textbf{Use CUDD library}: Replace PyEDA with CUDD (C-based) for significantly faster BDD operations.
+\end{itemize}
+
+\subsubsection{Smarter Candidate Sampling}
+Instead of arbitrarily limiting candidates, employ:
+\begin{itemize}
+    \item \textbf{Stratified sampling}: Sample uniformly from different regions of the state space.
+    \item \textbf{Guided search}: Use heuristics (e.g., distance from initial state, token distribution) to prioritize candidates likely to be deadlocks or optimal.
+\end{itemize}
+
+\subsubsection{Incremental ILP}
+For optimization (Task 5), formulate the ILP problem directly using symbolic constraints (e.g., Parikh vectors) rather than enumerating all candidates. This could scale better for large reachability sets.
+
+\subsubsection{Parallelization}
+Both BDD operations and ILP solving can benefit from parallelization:
+\begin{itemize}
+    \item Partition the reachability computation across multiple threads.
+    \item Use parallel ILP solvers (e.g., Gurobi with multithreading).
+\end{itemize}
+
+\subsection{Lessons Learned}
+\label{subsec:lessons}
+
+\subsubsection{Theoretical Insights}
+\begin{itemize}
+    \item BDDs excel at \textbf{compactly representing} large, structured state spaces but require careful engineering (variable ordering, operation scheduling).
+    \item ILP provides a \textbf{declarative framework} for complex constraints but introduces solver overhead.
+    \item The \textbf{hybrid approach} (BDD for representation, ILP for reasoning) balances the strengths of both paradigms.
+\end{itemize}
+
+\subsubsection{Practical Takeaways}
+\begin{itemize}
+    \item \textbf{Modularity matters}: Separating tasks into independent modules simplified development and debugging.
+    \item \textbf{Verification is essential}: Cross-checking BDD results against explicit enumeration caught subtle bugs early.
+    \item \textbf{Scalability requires specialization}: Small models favor simple algorithms; large models demand symbolic methods.
+\end{itemize}
+
+\subsection{Applications and Future Work}
+\label{subsec:future-work}
+
+The techniques implemented in this assignment have broad applications:
+\begin{itemize}
+    \item \textbf{Software verification}: Model checking concurrent programs using Petri net semantics.
+    \item \textbf{Hardware design}: Verifying asynchronous circuits represented as Petri nets.
+    \item \textbf{Business process management}: Analyzing workflow models for deadlocks and optimization opportunities.
+    \item \textbf{Biological systems}: Modeling and analyzing regulatory networks.
+\end{itemize}
+
+\textbf{Future extensions} could include:
+\begin{itemize}
+    \item Support for \textbf{unbounded Petri nets} using abstraction or approximation.
+    \item \textbf{Temporal logic model checking} (e.g., CTL, LTL) on top of symbolic reachability.
+    \item \textbf{Counterexample generation}: When a property fails, generate concrete execution traces.
+    \item \textbf{GUI-based visualization}: Interactive exploration of reachability graphs and BDD structures.
+\end{itemize}
+
+\subsection{Concluding Remarks}
+
+This assignment provided hands-on experience with cutting-edge formal verification techniques. By implementing both symbolic (BDD) and algebraic (ILP) methods, we gained a deeper appreciation for their complementary strengths and limitations. The successful integration of these techniques demonstrates the power of hybrid approaches in addressing complex computational problems.
+
+Looking forward, the principles learned here—symbolic representation, efficient reasoning, and hybrid algorithm design—are broadly applicable to many areas of computer science, from AI planning to network verification and beyond.

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pnml xmlns="http://www.pnml.org/version-2009/grammar/pnml">
+  <net id="mutex" type="http://www.pnml.org/version-2009/grammar/ptnet">
+    <page id="page1">
+      <!-- Resource -->
+      <place id="resource">
+        <name><text>Resource</text></name>
+        <initialMarking><text>1</text></initialMarking>
+      </place>
+      
+      <!-- Process 1 -->
+      <place id="p1_idle">
+        <name><text>P1_Idle</text></name>
+        <initialMarking><text>1</text></initialMarking>
+      </place>
+      <place id="p1_critical">
+        <name><text>P1_Critical</text></name>
+        <initialMarking><text>0</text></initialMarking>
+      </place>
+      
+      <!-- Process 2 -->
+      <place id="p2_idle">
+        <name><text>P2_Idle</text></name>
+        <initialMarking><text>1</text></initialMarking>
+      </place>
+      <place id="p2_critical">
+        <name><text>P2_Critical</text></name>
+        <initialMarking><text>0</text></initialMarking>
+      </place>
+      
+      <!-- Transitions -->
+      <transition id="p1_enter">
+        <name><text>P1_Enter</text></name>
+      </transition>
+      <transition id="p1_exit">
+        <name><text>P1_Exit</text></name>
+      </transition>
+      <transition id="p2_enter">
+        <name><text>P2_Enter</text></name>
+      </transition>
+      <transition id="p2_exit">
+        <name><text>P2_Exit</text></name>
+      </transition>
+      
+      <!-- Arcs for Process 1 -->
+      <arc id="a1" source="p1_idle" target="p1_enter"/>
+      <arc id="a2" source="resource" target="p1_enter"/>
+      <arc id="a3" source="p1_enter" target="p1_critical"/>
+      <arc id="a4" source="p1_critical" target="p1_exit"/>
+      <arc id="a5" source="p1_exit" target="p1_idle"/>
+      <arc id="a6" source="p1_exit" target="resource"/>
+      
+      <!-- Arcs for Process 2 -->
+      <arc id="a7" source="p2_idle" target="p2_enter"/>
+      <arc id="a8" source="resource" target="p2_enter"/>
+      <arc id="a9" source="p2_enter" target="p2_critical"/>
+      <arc id="a10" source="p2_critical" target="p2_exit"/>
+      <arc id="a11" source="p2_exit" target="p2_idle"/>
+      <arc id="a12" source="p2_exit" target="resource"/>
+    </page>
+  </net>
+</pnml>

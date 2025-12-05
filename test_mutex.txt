@@ -1,0 +1,52 @@
+﻿Analyzing: mutual_exclusion.pnml
+--------------------------------------------------
+
+============================================================
+PETRI NET SUMMARY
+============================================================
+Places: 5
+Transitions: 4
+Input arcs: 6
+Output arcs: 6
+
+Initial marking:
+  p1_critical: 0
+  p1_idle: 1
+  p2_critical: 0
+  p2_idle: 1
+  resource: 1
+============================================================
+
+
+==================================================
+TASK 2: EXPLICIT REACHABILITY
+==================================================
+Reachable states (Explicit): 3
+Time: 0.0000s
+
+==================================================
+TASK 3: SYMBOLIC REACHABILITY (BDD)
+==================================================
+============================================================
+TASK 3: SYMBOLIC REACHABILITY (BDD) - FIXED POINT
+============================================================
+BDD constructed: yes
+Reported reachable markings: 3
+Construction time: 0.0057 seconds
+============================================================
+
+SUCCESS: State counts match.
+
+==================================================
+TASK 4: DEADLOCK DETECTION (ILP + BDD)
+==================================================
+Time: 0.0322s
+No deadlock detected
+
+==================================================
+TASK 5: OPTIMIZATION (ILP + BDD)
+==================================================
+Objective: Maximize sum of tokens (all weights = 1)
+Time: 0.0273s
+Optimal Value: 3
+Optimal Marking (non-zero): {'p1_idle': 1, 'p2_idle': 1, 'resource': 1}

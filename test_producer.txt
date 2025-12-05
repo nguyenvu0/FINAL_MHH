@@ -1,0 +1,53 @@
+﻿Analyzing: producer_consumer.pnml
+--------------------------------------------------
+
+============================================================
+PETRI NET SUMMARY
+============================================================
+Places: 3
+Transitions: 2
+Input arcs: 2
+Output arcs: 2
+
+Initial marking:
+  buffer: 0
+  consumed: 0
+  ready: 1
+============================================================
+
+
+==================================================
+TASK 2: EXPLICIT REACHABILITY
+==================================================
+Reachable states (Explicit): 3
+Time: 0.0000s
+
+==================================================
+TASK 3: SYMBOLIC REACHABILITY (BDD)
+==================================================
+============================================================
+TASK 3: SYMBOLIC REACHABILITY (BDD) - FIXED POINT
+============================================================
+BDD constructed: yes
+Reported reachable markings: 3
+Construction time: 0.0013 seconds
+============================================================
+
+SUCCESS: State counts match.
+
+==================================================
+TASK 4: DEADLOCK DETECTION (ILP + BDD)
+==================================================
+Time: 0.0326s
+Deadlock marking:
+  buffer: 0
+  consumed: 1
+  ready: 0
+
+==================================================
+TASK 5: OPTIMIZATION (ILP + BDD)
+==================================================
+Objective: Maximize sum of tokens (all weights = 1)
+Time: 0.0173s
+Optimal Value: 1
+Optimal Marking (non-zero): {'buffer': 1}

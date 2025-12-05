@@ -1,0 +1,41 @@
+\section{Introduction}
+\label{sec:introduction}
+
+\subsection{Background}
+Petri nets, introduced by Carl Adam Petri in the early 1960s~\cite{petri1962}, have become one of the most fundamental mathematical models for describing concurrent, distributed, and event-driven systems. They provide both a graphical and formal representation of how conditions (places) and events (transitions) interact through token flow, enabling precise analysis of system behavior.
+
+From a theoretical perspective, Petri nets occupy a unique position at the intersection of graph theory, discrete dynamical systems, linear algebra, and logic-based reasoning. Many core questions in computer science—such as reachability, liveness, and deadlock-freedom—can be formally stated and analyzed within the Petri net framework.
+
+However, these problems are also computationally challenging. Even for small systems, the state space explosion caused by concurrency can lead to an exponential number of reachable markings, making exhaustive enumeration impractical for large-scale systems.
+
+\subsection{Motivation}
+To address the scalability challenge, two complementary approaches have emerged:
+
+\begin{enumerate}
+    \item \textbf{Symbolic representations} such as Binary Decision Diagrams (BDDs)~\cite{bryant1986} compactly encode large state spaces by exploiting structural regularities in the system.
+    \item \textbf{Integer Linear Programming (ILP)}~\cite{graver1975} provides a flexible optimization-based framework to reason about properties of Petri nets using algebraic constraints.
+\end{enumerate}
+
+While these techniques have been separately applied to Petri net analysis, combining them offers the potential for both efficient state-space exploration and formal property checking.
+
+\subsection{Assignment Objectives}
+This assignment aims to build a practical application integrating symbolic and algebraic reasoning techniques for analyzing 1-safe Petri nets. The specific objectives are:
+
+\begin{enumerate}
+    \item \textbf{Task 1}: Implement a PNML parser to read Petri nets from standardized XML files.
+    \item \textbf{Task 2}: Perform explicit enumeration of reachable markings using breadth-first or depth-first search.
+    \item \textbf{Task 3}: Implement symbolic reachability analysis using Binary Decision Diagrams (BDDs).
+    \item \textbf{Task 4}: Detect deadlocks by combining ILP formulation with BDD representation.
+    \item \textbf{Task 5}: Solve optimization problems over reachable markings using ILP and BDD.
+\end{enumerate}
+
+Through this exercise, we gain both theoretical insight into formal verification methods and practical experience with computational modeling techniques widely used in system analysis, verification, and artificial intelligence.
+
+\subsection{Report Structure}
+The remainder of this report is organized as follows:
+\begin{itemize}
+    \item \textbf{Section~\ref{sec:theoretical}}: Provides theoretical background on Petri nets, BDDs, and ILP formulations.
+    \item \textbf{Section~\ref{sec:implementation}}: Describes the implementation design, data structures, and algorithms for each task.
+    \item \textbf{Section~\ref{sec:experimental}}: Presents experimental results and performance analysis on test models.
+    \item \textbf{Section~\ref{sec:conclusion}}: Discusses challenges encountered, possible improvements, and concluding remarks.
+\end{itemize}

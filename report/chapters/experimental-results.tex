@@ -1,0 +1,136 @@
+\section{Experimental Results}
+\label{sec:experimental}
+
+\subsection{Test Models}
+\label{subsec:test-models}
+
+We evaluate our implementation on three Petri net models of varying characteristics:
+
+\subsubsection{Model 1: Simple Linear Chain}
+\begin{itemize}
+    \item \textbf{Places}: 3 ($p_1, p_2, p_3$)
+    \item \textbf{Transitions}: 2 ($t_1, t_2$)
+    \item \textbf{Structure}: Linear chain $p_1 \xrightarrow{t_1} p_2 \xrightarrow{t_2} p_3$
+    \item \textbf{Initial marking}: $M_0(p_1) = 1$
+    \item \textbf{Expected behavior}: Token flows linearly, terminates at $p_3$ (deadlock)
+\end{itemize}
+
+\subsubsection{Model 2: Producer-Consumer}
+\begin{itemize}
+    \item \textbf{Places}: 3 (Ready, Buffer, Consumed)
+    \item \textbf{Transitions}: 2 (Produce, Consume)
+    \item \textbf{Initial marking}: Ready = 1
+    \item \textbf{Expected behavior}: Producer creates item in buffer, consumer removes it (deadlock at end)
+\end{itemize}
+
+\subsubsection{Model 3: Mutual Exclusion}
+\begin{itemize}
+    \item \textbf{Places}: 5 (Resource, P1\_Idle, P1\_Critical, P2\_Idle, P2\_Critical)
+    \item \textbf{Transitions}: 4 (P1\_Enter, P1\_Exit, P2\_Enter, P2\_Exit)
+    \item \textbf{Initial marking}: Resource = 1, P1\_Idle = 1, P2\_Idle = 1
+    \item \textbf{Expected behavior}: Two processes share one resource with mutual exclusion (no deadlock)
+\end{itemize}
+
+\subsection{Performance Results}
+\label{subsec:performance}
+
+Table~\ref{tab:performance} summarizes the execution time for each task across all test models.
+
+\begin{table}[htbp]
+\centering
+\caption{Performance Comparison (Time in seconds)}
+\label{tab:performance}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model} & \textbf{States} & \textbf{Explicit (Task 2)} & \textbf{BDD (Task 3)} & \textbf{ILP+BDD (Tasks 4\&5)} \\
+\midrule
+Simple         & 3               & 0.0000                     & 0.0011                & 0.03--0.11                    \\
+Producer       & 3               & 0.0000                     & 0.0012                & 0.02--0.04                    \\
+Mutex          & 3               & 0.0000                     & 0.0057                & 0.03--0.03                    \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Task-Specific Results}
+\label{subsec:task-results}
+
+\subsubsection{Task 2: Explicit Reachability}
+All three models have only \textbf{3 reachable states}, which are enumerated nearly instantaneously ($<0.001$s). The explicit approach serves as a baseline for verifying correctness.
+
+\subsubsection{Task 3: Symbolic Reachability (BDD)}
+The BDD-based approach successfully constructs the reachability set for all models. Importantly, the number of states counted from the BDD \textbf{exactly matches} the explicit enumeration, confirming correctness.
+
+\textbf{Observations}:
+\begin{itemize}
+    \item For small state spaces, BDD overhead (construction, Boolean operations) makes it slightly slower than explicit enumeration.
+    \item The benefit of BDDs would become apparent with larger models where explicit enumeration becomes infeasible.
+\end{itemize}
+
+\subsubsection{Task 4: Deadlock Detection (ILP + BDD)}
+Table~\ref{tab:deadlock} shows deadlock detection results.
+
+\begin{table}[htbp]
+\centering
+\caption{Deadlock Detection Results}
+\label{tab:deadlock}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Model} & \textbf{Deadlock Found?} & \textbf{Deadlock Marking} \\
+\midrule
+Simple         & Yes                      & $\{p_3: 1\}$              \\
+Producer       & Yes                      & $\{\text{Consumed}: 1\}$  \\
+Mutex          & No                       & ---                       \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Analysis}:
+\begin{itemize}
+    \item \textbf{Simple \& Producer models}: Both have terminal states where no transition is enabled, correctly identified as deadlocks.
+    \item \textbf{Mutual Exclusion}: No deadlock exists because the system can always return to the idle state (initial marking). This validates the correctness of the mutual exclusion design.
+\end{itemize}
+
+\subsubsection{Task 5: Optimization}
+We optimize the objective function $\max \sum_{p \in P} M(p)$ (maximize total token count).
+
+\begin{table}[htbp]
+\centering
+\caption{Optimization Results}
+\label{tab:optimization}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Model} & \textbf{Optimal Value} & \textbf{Optimal Marking} & \textbf{Time (s)} \\
+\midrule
+Simple         & 1                      & $\{p_1: 1\}$             & 0.04              \\
+Producer       & 1                      & $\{\text{Buffer}: 1\}$   & 0.02              \\
+Mutex          & 3                      & Initial marking          & 0.03              \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Observations}:
+\begin{itemize}
+    \item All models are 1-safe, so the maximum token count at any marking is limited by the number of places with tokens.
+    \item The mutex model achieves the highest token count (3 tokens) at its initial marking: Resource=1, P1\_Idle=1, P2\_Idle=1.
+\end{itemize}
+
+\subsection{Verification of Correctness}
+\label{subsec:verification}
+
+\textbf{Key validation}: For all test models, the number of states computed by the BDD-based method (Task 3) \textbf{exactly matches} the explicit enumeration (Task 2). This confirms:
+\begin{enumerate}
+    \item The BDD construction correctly encodes the reachability set.
+    \item The transition relation and fixed-point iteration are implemented correctly.
+\end{enumerate}
+
+\subsection{Scalability Discussion}
+\label{subsec:scalability}
+
+While our test models are small (3 states each), the implemented techniques scale differently:
+\begin{itemize}
+    \item \textbf{Explicit enumeration (Task 2)}: $O(2^{|P|})$ space in the worst case.
+    \item \textbf{BDD (Task 3)}: Space depends on variable ordering and structure; can be exponentially more compact for structured systems.
+    \item \textbf{ILP (Tasks 4\&5)}: Limited by the number of candidate markings extracted (we use a cap of 500--1000).
+\end{itemize}
+
+For larger models, BDD+ILP hybrid offers a practical tradeoff: BDDs handle state-space compactly, while ILP solves optimization/verification subproblems on manageable candidate sets.

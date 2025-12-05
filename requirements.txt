@@ -1,0 +1,11 @@
+# Petri Net Analyzer - Requirements
+# Mathematical Modeling Assignment - CO2011
+
+# BDD Library for Task 3
+pyeda>=0.28.0
+
+# Numerical operations
+numpy>=1.20.0
+
+# ILP Solver (Optional, if using explicit ILP fallback)
+pulp>=2.7.0
